@@ -4,58 +4,50 @@ namespace Shopping.AppLogic.Modules
 {
     public class Cart
     {
+        public static List<(string code, decimal discount)> ValidDiscountCodes = [
+            ("Buy4Free", 0.2M),
+            ("2+1", 0.1M),
+            ("FallCase26", 0.25M),
+        ];
         public List<CartItem> items = [];
         public decimal total = 0;
-
-        public void add(string name, decimal price, int qty)
+        public bool discountApplied = false;
+        public void Add(CartItem newItem)
         {
-            items.Add(new(name, price, qty));
-            total = total + price * qty;
+            items.Add(newItem);
+            total += newItem.Price * newItem.Quantity;
         }
 
-        public void remove(string name)
+        public void Remove(string name)
         {
-            foreach (var i in items)
-            {
-                if (i.Name == name)
-                {
-                    total = total - i.Price * i.Price;
-                    items.Remove(i);
-                    return;
-                }
-            }
-            Console.WriteLine("not found");
+            CartItem currentItem = items.FirstOrDefault(item => item.Name == name)
+                ?? throw new ItemNotFoundException(name);
+            total -= currentItem.Price * currentItem.Quantity;
+            items.Remove(currentItem);
         }
 
-        public void applyDiscount(string code)
+        public void ApplyDiscount(string discountCode)
         {
-            if (code == "SAVE10")
-            {
-                total = total - total * 0.1M;
-            }
-            else if (code == "SAVE20")
-            {
-                total = total - total * 0.2M;
-            }
-            else
-            {
-                Console.WriteLine("invalid code");
-            }
+            if (discountApplied)
+                throw new InvalidOperationException("Cannot apply discount code twice");
+            var currentDiscount = ValidDiscountCodes.FirstOrDefault(codeTuple => codeTuple.code == discountCode);
+            if (currentDiscount.code is null)
+                throw new InvalidDiscountCodeException(discountCode);
+            total *= currentDiscount.discount;
+            discountApplied = true;
         }
 
-        public void checkout(decimal cash)
+        public decimal Checkout(decimal cash)
         {
             if (cash < total)
-            {
-                Console.WriteLine("not enough money");
-            }
-            else
-            {
-                decimal change = cash - total;
-                Console.WriteLine("Change: " + change);
-                items.Clear();
-                total = 0;
-            }
+                throw new InsufficientFundsException(total, cash);
+
+            decimal change = cash - total;
+            items.Clear();
+            total = 0;
+            discountApplied = false;   // if you added the one-discount-per-cart field
+
+            return change;
         }
     }
 }

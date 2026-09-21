@@ -25,24 +25,24 @@ namespace ShoppingApp.Testing
         public void AddSingleItem(CartItem item)
         {
             Cart cart = new();
-            cart.items.Add(item);
+            cart.Add(item);
             cart.items.Count.ShouldBe(1);
         }
         [Fact]
         public void AddMultipleItems()
         {
             Cart cart = new();
-            cart.items.Add(FactTestCartItems[0]);
-            cart.items.Add(FactTestCartItems[1]);
+            cart.Add(FactTestCartItems[0]);
+            cart.Add(FactTestCartItems[1]);
             cart.items.Count.ShouldBe(2);
         }
         [Fact]
         public void RemoveExistingItem()
         {
             Cart cart = new();
-            cart.items.Add(FactTestCartItems[0]);
-            cart.items.Add(FactTestCartItems[1]);
-            cart.items.Remove(FactTestCartItems[0]);
+            cart.Add(FactTestCartItems[0]);
+            cart.Add(FactTestCartItems[1]);
+            cart.Remove(FactTestCartItems[0].Name);
             cart.items.ShouldHaveSingleItem();
             cart.items.First().Name.ShouldBe(FactTestCartItems[1].Name);
         }
@@ -53,18 +53,19 @@ namespace ShoppingApp.Testing
         public void ApplyValidDiscountCode(string code)
         {
             Cart cart = new();
-            cart.items.Add(FactTestCartItems[0]);
-            cart.items.Add(FactTestCartItems[1]);
-            cart.applyDiscount(code);
+            cart.Add(FactTestCartItems[0]);
+            cart.Add(FactTestCartItems[1]);
+            cart.ApplyDiscount(code);
             cart.total.Equals(20.296);
         }
         [Fact]
         public void CheckoutWithExactAmount()
         {
             Cart cart = new();
-            cart.items.AddRange(FactTestCartItems);
+            cart.Add(FactTestCartItems[0]);
+            cart.Add(FactTestCartItems[1]);
             decimal exactCashAmount = cart.items.Sum(item => item.Price * item.Quantity);
-            cart.checkout(exactCashAmount);
+            cart.Checkout(exactCashAmount);
             cart.items.ShouldBeEmpty();
             cart.total.Equals(0);
         }
@@ -72,11 +73,12 @@ namespace ShoppingApp.Testing
         public void CheckoutWithExcessAmount()
         {
             Cart cart = new();
-            cart.items.AddRange(FactTestCartItems);
+            cart.Add(FactTestCartItems[0]);
+            cart.Add(FactTestCartItems[1]);
             decimal excessCashAmount = cart.items.Sum(item => item.Price * item.Quantity) + 20;
-            cart.checkout(excessCashAmount);
-            cart.items.ShouldNotBeEmpty();
-            cart.total.ShouldNotBe(0);
+            cart.Checkout(excessCashAmount);
+            cart.items.ShouldBeEmpty();
+            cart.total.ShouldBe(0);
         }
         [Theory]
         [InlineData("FallCase26", "FallCase26")]
@@ -85,22 +87,19 @@ namespace ShoppingApp.Testing
         public void ApplyMultipleDiscountCodes(string code1, string code2)
         {
             Cart cart = new();
-            cart.items.Add(FactTestCartItems[0]);
-            cart.items.Add(FactTestCartItems[1]);
-            cart.applyDiscount(code1);
-            cart.applyDiscount(code2);
+            cart.Add(FactTestCartItems[0]);
+            cart.Add(FactTestCartItems[1]);
+            cart.ApplyDiscount(code1);
+            Should.Throw<InvalidOperationException>(() => cart.ApplyDiscount(code2));
             cart.total.Equals(20.296);
         }
         [Fact]
         public void CannotCheckoutWithBalance()
         {
             Cart cart = new();
-            cart.items.AddRange(FactTestCartItems);
-            decimal reqiredAmount = cart.items.Sum(item => item.Price * item.Quantity);
-            decimal shortCashAmount = cart.items.Sum(item => item.Price * item.Quantity) * 0.5M;
-
-            var ex = Should.Throw<InsufficientFundsException>(() => cart.checkout(shortCashAmount));
-
+            cart.Add(FactTestCartItems[0]);
+            cart.Add(FactTestCartItems[1]);
+            var ex = Should.Throw<InsufficientFundsException>(() => cart.Checkout(0));
             cart.items.ShouldNotBeEmpty();
             cart.total.ShouldNotBe(0);
         }

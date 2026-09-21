@@ -15,15 +15,15 @@ public abstract class CartException : Exception
 
 public sealed class ItemNotFoundException : CartException
 {
-    public int ItemId { get; }
+    public string ItemName { get; }
 
-    public ItemNotFoundException(int itemId)
-        : base($"Item {itemId} could not be found.")
-        => ItemId = itemId;
+    public ItemNotFoundException(string itemName)
+        : base($"Item {itemName} could not be found.")
+        => ItemName = itemName;
 
-    public ItemNotFoundException(int itemId, Exception innerException)
-        : base($"Item {itemId} could not be found.", innerException)
-        => ItemId = itemId;
+    public ItemNotFoundException(string itemName, Exception innerException)
+        : base($"Item {itemName} could not be found.", innerException)
+        => ItemName = itemName;
 }
 
 public sealed class InvalidQuantityException : CartException
