@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Shopping.AppLogic/Shopping.AppLogic.csproj" />
+  <Project Path="ShoppingApp.Testing/ShoppingApp.Testing.csproj" />
+</Solution>
